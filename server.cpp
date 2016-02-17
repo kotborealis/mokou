@@ -8,32 +8,70 @@
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <vector>
-#include <pthread.h>
+#include <sys/select.h>
 
 using namespace std;
 
-static void *connection_handler(void *sockfd){
-    int sock = *(int*)sockfd;
-    cout<<sock<<"\n";
-    char *message="faffofsasses";
-    write(sock , message , strlen(message));
-};
-
 Server::Server(int sp){
 	server_port = sp;
-	initSocket(&sockfd,&server_addr,server_port);
-	listen(sockfd,5);
-
+	initSocket(&listener,&server_addr,server_port);
+	listen(listener,5);
 	cout<<"Listening on " << server_port << "\n";
+	FD_SET(listener,&master);
+	cout<<"Listener:"<<listener<<"\n";
+	fdmax = listener;
 
-	int c = sizeof(struct sockaddr_in);
-	pthread_t thread_id;
-	while(clientfd = accept(sockfd, (struct sockaddr*)&client_addr, (socklen_t*)&c)){
-		if(pthread_create(&thread_id,NULL,connection_handler,(void*)&clientfd)<0)
-			error("Cannot create thread");
-		pthread_join(thread_id,NULL);
+	int i,j;
+	for(;;){
+		read_fds=master;
+		cout<<"copied\n";
+		if(select(fdmax+1,&read_fds,NULL,NULL,NULL)==-1)
+			error("Error: Server::Server select error");
+		for(i=listener;i<=fdmax;i++){
+			if(FD_ISSET(i,&read_fds)){
+				if(i==listener){//new connection
+					cout<<"new connection\n";
+					addrlen = sizeof(remote_addr);
+					clientfd = accept(listener,(struct sockaddr*)&remote_addr,&addrlen);
+
+					if(clientfd==-1){
+						perror("Error: can't accept client");
+					}
+					else{
+						FD_SET(clientfd,&master);
+						if(clientfd>fdmax)
+							fdmax=clientfd;
+						cout<<"new connection success\n";
+						send(clientfd,"sassos",6,0);
+						cout<<"Client:"<<clientfd<<"\n";
+					}
+				}
+				else{//data from client
+					cout<<"data!\n";
+					if((nBytes = recv(i, buf, sizeof(buf), 0))<=0){//connection closed/lost/error
+						if(nBytes==0)
+							cout<<"Connection closed";
+						else
+							perror("Error reading data from socket");
+						close(i);
+						FD_CLR(i,&master);
+					}
+					else{//data
+						cout<<"{\n " << buf << "}\n";
+						for(j=listener+1;j<fdmax;j++){
+							if(FD_ISSET(j,&master)){
+								if(j!=listener && j!=i){
+									if(send(j,buf,nBytes,0)==-1)
+										perror("send");
+								}
+							}
+						}
+					}
+				}
+		}
+			}
 	}
+	//int c = sizeof(struct sockaddr_in);
 }
 
 void Server::initSocket(int *sockfd, struct sockaddr_in *server_addr, int port){
@@ -43,7 +81,7 @@ void Server::initSocket(int *sockfd, struct sockaddr_in *server_addr, int port){
 
 	int enable=1;
 	if (setsockopt(*sockfd, SOL_SOCKET, SO_REUSEADDR, (void*)&enable, (socklen_t) sizeof(enable)) < 0)
-    	error("setsockopt(SO_REUSEADDR) failed");
+    	error("Error: Server::initSOcket setsockopt(SO_REUSEADDR) failed");
 
 	server_addr->sin_family = AF_INET;
 	server_addr->sin_addr.s_addr = INADDR_ANY;
