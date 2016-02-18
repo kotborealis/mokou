@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/select.h>
+#include <vector>
 
 #define BufferLength 256
 
@@ -25,8 +26,7 @@ class Server{
 		int nBytes;//temp var for read
 		struct sockaddr_in server_addr, remote_addr;//server client addr info
 		socklen_t addrlen;
-		void* wbuf;
-		int wbuf_length=0;
+		vector<uint8_t> wbuf={};
 
 		void initSocket(int *socket_desc, struct sockaddr_in *server_addr, int port);
 		void connection_handler(int *socket_desc, struct sockaddr_in *remote_addr);

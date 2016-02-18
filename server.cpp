@@ -11,6 +11,7 @@
 #include <sys/select.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <vector>
 
 using namespace std;
 
@@ -85,12 +86,23 @@ void Server::poll(){
 					}
 				}
 			}
+			if(FD_ISSET(i,&write_fds) && i!=listener){
+				vector<uint8_t> _wbuf = wbuf;
+				while(_wbuf.size()){
+					int ret=send(i,(char*)&_wbuf[0],_wbuf.size(),0);
+					if(ret<0){
+						error("Cannot write data to socket");
+					}
+					else if(ret==0){
+						error("Socket closed!");
+					}
+					else{
+						_wbuf.erase(_wbuf.begin(),_wbuf.begin()+ret);
+					}
+				}
+			}
 		}
-		if(wbuf_length>0){
-			cout<<"YES! YES! YES!\n";
-			bzero(wbuf,wbuf_length);
-			wbuf_length=0;
-		}
+		wbuf.erase(wbuf.begin(),wbuf.end());
 	}
 }
 
@@ -102,18 +114,11 @@ void Server::disconnect_handler(int *socket_desc){
 	//cout<<"Disconnected: "<<*socket_desc<<"\n";
 }
 void Server::data_handler(int *socket_desc,char *buf, int length){
-	//cout<<"Data: "<<buf<<"\n";
-	/*for(int j=listener;j<=fdmax;j++){
-		if(FD_ISSET(j,&master)){
-			if(j!=listener && j!=*socket_desc){
-				if(send(j,buf,length,0)==-1)
-					perror("Error: broadcast received msg failed");
-			}
-		}
-	}*/
 	if(*buf=='z'){
 		//"\r\nZA WARUDO! TOKI WA TOMARE\r\n"
+		string str = "\r\nZA WARUDO! TOKI WA TOMARE\r\n";
 		cout<<"ZAWARUDO\n";
+		wbuf.insert(wbuf.end(),str.begin(),str.end());
 	}
 }
 
