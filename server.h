@@ -19,13 +19,19 @@ class Server{
 		int server_port;//port
 		int listener, clientfd;//server listen socket descriptor, accepted socket descriptor
 		fd_set master;//master descriptor list
-		fd_set read_fds;//temp descriptor list
+		fd_set read_fds, write_fds;//temp descriptor lists
 		int fdmax;//max descriptor number (for select())
 		char buf[BufferLength];//buffer
 		int nBytes;//temp var for read
 		struct sockaddr_in server_addr, remote_addr;//server client addr info
 		socklen_t addrlen;
+		void* wbuf;
+		int wbuf_length=0;
 
-		void initSocket(int *socket_desc, struct sockaddr_in *socket, int port);
+		void initSocket(int *socket_desc, struct sockaddr_in *server_addr, int port);
+		void connection_handler(int *socket_desc, struct sockaddr_in *remote_addr);
+		void disconnect_handler(int *socket_desc);
+		void data_handler(int *socket_desc,char *buf, int length);
+		void poll();
 		void error(const char *msg);
 };
