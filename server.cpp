@@ -12,6 +12,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <vector>
+#include <set>
 
 using namespace std;
 
@@ -39,49 +40,49 @@ void Server::initSocket(int *sockfd, struct sockaddr_in *server_addr, int port){
 
 	if(bind(*sockfd, (struct sockaddr*)server_addr, sizeof(*server_addr))<0)
 		error("Error: Server::initSocket bind sockfd;\n");
-
-	FD_SET(listener,&master);
-	fdmax = listener;
 }
 void Server::poll() {
-	int i;
 	for(;;){
-		read_fds=master;
-		write_fds=master;
+		FD_ZERO(&read_fds);
+		FD_SET(listener,&read_fds);
+
+		for(set<int>::iterator it = clients.begin(); it != clients.end(); it++)
+            FD_SET(*it, &read_fds);
+
+        fdmax=max(listener, *max_element(clients.begin(), clients.end()));
+
 		if(select(fdmax+1,&read_fds,NULL,NULL,NULL)==-1)
 			error("Error: Server::Server select errorn\n");
-		for(i=listener;i<=fdmax;i++){
-			if(FD_ISSET(i,&read_fds)){
-				if(i==listener){//new connection
-					addrlen = sizeof(remote_addr);
-					clientfd = accept(listener,(struct sockaddr*)&remote_addr,&addrlen);
-					if(clientfd==-1){
-						perror("Error: can't accept client\n");
-					}
-					else{
-						FD_SET(clientfd,&master);
-						if(clientfd>fdmax)
-							fdmax=clientfd;
-						this->connection_handler(&clientfd, &remote_addr);
-					}
-				}
-				else{//data from client
-					if((nBytes = recv(i, buf, sizeof(buf), 0))<=0){//connection closed/lost/error
-						if(nBytes==0){
-							
-						}
-						else
-							perror("Error: reading data from socket\n");
-						this->disconnect_handler(&i);
-						close(i);
-						FD_CLR(i,&master);
-					}
-					else{//data
-						this->data_handler(&i,buf,nBytes);
-					}
-				}
+
+		if(FD_ISSET(listener,&read_fds)){
+			addrlen = sizeof(remote_addr);
+			clientfd = accept(listener,(struct sockaddr*)&remote_addr,&addrlen);
+			if(clientfd==-1){
+				perror("Error: can't accept client\n");
 			}
-			if(FD_ISSET(i,&write_fds) && i!=listener){
+			else{
+				fcntl(clientfd, F_SETFL, O_NONBLOCK);
+				clients.insert(clientfd);
+				connection_handler(clientfd, &remote_addr);
+			}
+		}
+		for(set<int>::iterator it = clients.begin(); it != clients.end(); it++)
+        {
+            if(FD_ISSET(*it, &read_fds))
+            {
+                bytes_read = recv(*it, buf, BufferSize-1, 0);
+
+                if(bytes_read <= 0)
+                {
+                    close(*it);
+                    clients.erase(*it);
+                    disconnect_handler(*it);
+                    continue;
+                }
+                data_handler(*it,buf,bytes_read);
+            }
+        }
+			/*if(FD_ISSET(i,&write_fds) && i!=listener){
 				vector<uint8_t> _wbuf = wbuf;
 				while(_wbuf.size()){
 					int ret=send(i,(char*)&_wbuf[0],_wbuf.size(),0);
@@ -96,27 +97,9 @@ void Server::poll() {
 					}
 				}
 			}
-		}
-		wbuf.erase(wbuf.begin(),wbuf.end());
+		wbuf.erase(wbuf.begin(),wbuf.end());*/
 	}
 }
-/*
-void Server::connection_handler(int *socket_desc, struct sockaddr_in *remote_addr){
-	//cout<<"Connected: "<<*socket_desc<<"@"<<inet_ntoa(remote_addr->sin_addr)<<"\n";
-	cout<<"WHAT\n";
-	send(*socket_desc,"sas",3,0);
-}
-void Server::disconnect_handler(int *socket_desc){
-	//cout<<"Disconnected: "<<*socket_desc<<"\n";
-}
-void Server::data_handler(int *socket_desc,char *buf, int length){
-	if(*buf=='z'){
-		//"\r\nZA WARUDO! TOKI WA TOMARE\r\n"
-		string str = "\r\nArar rar\r\n";
-		cout<<"Rar\n";
-		wbuf.insert(wbuf.end(),str.begin(),str.end());
-	}
-}*/
 
 void Server::error(const char *msg){
     perror(msg);
