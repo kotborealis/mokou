@@ -1,9 +1,11 @@
 
 #include "server.h"
+#include "websockets.h"
 
 using namespace std;
 
 int main(int argc, char** argv){
-	Server s = Server(8090);
+	Websockets s = Websockets(8090);
+	s.poll();
 	return 0;
 }

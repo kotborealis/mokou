@@ -18,11 +18,8 @@ using namespace std;
 Server::Server(int sp){
 	server_port = sp;
 	initSocket(&listener,&server_addr,server_port);
-
 	listen(listener,5);
-	cout<<"Listening on " << server_port << "\n";
-
-	poll();
+	cout<<"Server listening!\n";
 }
 
 void Server::initSocket(int *sockfd, struct sockaddr_in *server_addr, int port){
@@ -46,8 +43,7 @@ void Server::initSocket(int *sockfd, struct sockaddr_in *server_addr, int port){
 	FD_SET(listener,&master);
 	fdmax = listener;
 }
-
-void Server::poll(){
+void Server::poll() {
 	int i;
 	for(;;){
 		read_fds=master;
@@ -57,7 +53,6 @@ void Server::poll(){
 		for(i=listener;i<=fdmax;i++){
 			if(FD_ISSET(i,&read_fds)){
 				if(i==listener){//new connection
-					cout<<"new connection\n";
 					addrlen = sizeof(remote_addr);
 					clientfd = accept(listener,(struct sockaddr*)&remote_addr,&addrlen);
 					if(clientfd==-1){
@@ -67,7 +62,7 @@ void Server::poll(){
 						FD_SET(clientfd,&master);
 						if(clientfd>fdmax)
 							fdmax=clientfd;
-						connection_handler(&clientfd, &remote_addr);
+						this->connection_handler(&clientfd, &remote_addr);
 					}
 				}
 				else{//data from client
@@ -77,12 +72,12 @@ void Server::poll(){
 						}
 						else
 							perror("Error: reading data from socket\n");
-						disconnect_handler(&i);
+						this->disconnect_handler(&i);
 						close(i);
 						FD_CLR(i,&master);
 					}
 					else{//data
-						data_handler(&i,buf,nBytes);
+						this->data_handler(&i,buf,nBytes);
 					}
 				}
 			}
@@ -105,9 +100,10 @@ void Server::poll(){
 		wbuf.erase(wbuf.begin(),wbuf.end());
 	}
 }
-
+/*
 void Server::connection_handler(int *socket_desc, struct sockaddr_in *remote_addr){
 	//cout<<"Connected: "<<*socket_desc<<"@"<<inet_ntoa(remote_addr->sin_addr)<<"\n";
+	cout<<"WHAT\n";
 	send(*socket_desc,"sas",3,0);
 }
 void Server::disconnect_handler(int *socket_desc){
@@ -116,11 +112,11 @@ void Server::disconnect_handler(int *socket_desc){
 void Server::data_handler(int *socket_desc,char *buf, int length){
 	if(*buf=='z'){
 		//"\r\nZA WARUDO! TOKI WA TOMARE\r\n"
-		string str = "\r\nZA WARUDO! TOKI WA TOMARE\r\n";
-		cout<<"ZAWARUDO\n";
+		string str = "\r\nArar rar\r\n";
+		cout<<"Rar\n";
 		wbuf.insert(wbuf.end(),str.begin(),str.end());
 	}
-}
+}*/
 
 void Server::error(const char *msg){
     perror(msg);

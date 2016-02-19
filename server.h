@@ -1,8 +1,8 @@
+#ifndef SERVER_H
+#define SERVER_H
+
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -16,6 +16,7 @@ using namespace std;
 class Server{
 	public:
 		Server(int sp);
+		void poll();
 	private:
 		int server_port;//port
 		int listener, clientfd;//server listen socket descriptor, accepted socket descriptor
@@ -26,12 +27,15 @@ class Server{
 		int nBytes;//temp var for read
 		struct sockaddr_in server_addr, remote_addr;//server client addr info
 		socklen_t addrlen;
-		vector<uint8_t> wbuf={};
 
 		void initSocket(int *socket_desc, struct sockaddr_in *server_addr, int port);
-		void connection_handler(int *socket_desc, struct sockaddr_in *remote_addr);
-		void disconnect_handler(int *socket_desc);
-		void data_handler(int *socket_desc,char *buf, int length);
-		void poll();
+	protected:
 		void error(const char *msg);
+		vector<uint8_t> wbuf={};
+
+		virtual void connection_handler(int *socket_desc, struct sockaddr_in *remote_addr)=0;
+		virtual void disconnect_handler(int *socket_desc)=0;
+		virtual void data_handler(int *socket_desc,char *buf, int length)=0;
 };
+
+#endif
