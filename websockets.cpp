@@ -23,9 +23,10 @@ void Websockets::connection_handler(int socket_desc, struct sockaddr_in *remote_
 	ws_on_connect(socket_desc);
 }
 void Websockets::disconnect_handler(int socket_desc){
+	closesock(socket_desc);
 	ws_on_close(socket_desc);
 }
-void Websockets::data_handler(int socket_desc, unsigned char *buf, int length){
+void Websockets::data_handler(int socket_desc, unsigned char *buf, unsigned int length){
 	if(ws_clients[socket_desc].readyState==CONNECTING){
 		string handshakeKey(reinterpret_cast<const char*>(buf));
 		size_t keyIndex=handshakeKey.find("Sec-WebSocket-Key: ");
@@ -37,11 +38,33 @@ void Websockets::data_handler(int socket_desc, unsigned char *buf, int length){
 			handshakeHeaders=handshakeHeaders+"\r\n\r\n";
 			send(socket_desc,(char*)handshakeHeaders.c_str(),handshakeHeaders.size(),0);
 			ws_clients[socket_desc].readyState=OPEN;
+			for(;buf[length-1]!='\n' && 
+				 buf[length-2]!='\r' && 
+				 buf[length-3]!='\n' && 
+				 buf[length-4]!='\r';length=recv(socket_desc, buf, BufferSize, 0));//Wait for \r\n\r\n
 			return;
 		}
+
 	}
 	else if(ws_clients[socket_desc].readyState==OPEN){
-		websocketHeader ws=parse_header(buf);
+		websocketHeader ws=parse_header(buf,length);
+		cout<<"fin: "<<ws.fin<<"; mask: "<<ws.mask<<"; opcode: "<<ws.opcode<<"; size: "<<ws.size<<";\n";
+		if(ws.opcode==TEXT_FRAME || ws.opcode==BINARY_FRAME){
+			cout<<read_data(socket_desc,ws,buf,length)<<"\n";
+		}
+		else if(ws.opcode==CLOSE){
+			disconnect_handler(socket_desc);
+			return;
+		}
+		else if(ws.opcode==PING){
+			ws_send_pong(socket_desc);
+		}
+		else if(ws.opcode==PONG){
+			
+		}
+		else if(ws.opcode==INVALID){
+			return;
+		}
 	}
 	else if(ws_clients[socket_desc].readyState==CLOSING){
 		
@@ -124,8 +147,70 @@ void Websockets::ws_send_pong(int sockfd){
 	send(sockfd,&send_buf[0],send_buf.size(),0);
 }
 
-Websockets::websocketHeader Websockets::parse_header(unsigned char *data){
+Websockets::websocketHeader Websockets::parse_header(unsigned char *data, unsigned int length){
+	unsigned int offset=0;
 	websocketHeader ws;
-	cout<<"\n-START-----------------\n"<<data<<"\n-END------------------------------------";
+
+	if(length<2){
+		ws.opcode=(opcode_type)INVALID;
+		return ws;
+	}
+
+	ws.fin=data[0]>>0x7;
+	ws.opcode=(opcode_type)(data[0]&0xf);
+	if(ws.opcode>0xa){
+		ws.opcode=(opcode_type)INVALID;
+		return ws;
+	}
+
+	ws.mask=data[1]>>0x7;
+	ws._size=data[1]&0x7f;
+	offset+=2;
+
+	ws.size=0;
+	if(ws._size==126){
+		for(size_t i=0;i<2;i++)
+			ws.size|=((uint64_t)data[offset+i])<<((1-i)*8);
+		offset=4;
+	}
+	else if(ws._size==127){
+		ws.size=0;
+		ws.opcode=(opcode_type)INVALID;
+		return ws;
+	}
+	else if(ws._size<126){
+		ws.size=ws._size;
+	}
+	if(ws.mask){
+		for(size_t i=0;i<4;i++)
+			ws.masking_key[i]=data[offset+i];
+		offset+=4;
+	}
+	else{
+		for(size_t i=0;i<4;i++)
+			ws.masking_key[i]=0;
+	}
+	ws.header_size=offset;
 	return ws;
+}
+
+string Websockets::read_data(int socket_desc, websocketHeader ws, unsigned char *buf, int length){
+	string ws_r_data;
+	string ws_r_data2;
+
+	size_t i;
+	for(i=0;i<ws.size-(ws.size-(length-ws.header_size));i++){
+		ws_r_data+=buf[ws.header_size+i]^ws.masking_key[i&0x3];
+	}
+
+	while(length-ws.header_size<ws.size){
+		size_t bytes_read=recv(socket_desc, buf, BufferSize, 0);
+		for(size_t j=0;j<bytes_read;j++){
+			ws_r_data2+=buf[j]^ws.masking_key[(i+j)&0x3];
+		}
+		ws_r_data+=ws_r_data2;
+		ws_r_data2.clear();
+		length+=bytes_read;
+	}
+	return ws_r_data;
 }

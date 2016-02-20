@@ -10,7 +10,7 @@
 #include <set>
 #include <algorithm>
 
-#define BufferSize 512
+#define BufferSize 128
 
 using namespace std;
 
@@ -26,7 +26,7 @@ class Server{
 		struct sockaddr_in server_addr, remote_addr;//server client addr info
 		socklen_t addrlen;
 		unsigned char buf[BufferSize];
-		int bytes_read;
+		unsigned int bytes_read;
 
 		void initSocket(int *socket_desc, struct sockaddr_in *server_addr, int port);
 	protected:
@@ -38,5 +38,5 @@ class Server{
 
 		virtual void connection_handler(int socket_desc, struct sockaddr_in *remote_addr)=0;
 		virtual void disconnect_handler(int socket_desc)=0;
-		virtual void data_handler(int socket_desc, unsigned char *buf, int length)=0;
+		virtual void data_handler(int socket_desc, unsigned char *buf, unsigned int length)=0;
 };

@@ -16,20 +16,24 @@ class Websockets: public Server{
             CLOSE = 0x8,
             PING = 0x9,
             PONG = 0xa,
+            INVALID = 0xFF,
 		} opcode_type;
 
 		struct websocketHeader{
 			bool fin;
 			bool mask;
 			opcode_type opcode;
-			int size;
+			int _size;
+			uint64_t size;
 			uint8_t masking_key[4];
+			unsigned int header_size;
 		};
 
 		void connection_handler(int socket_desc, struct sockaddr_in *remote_addr);
 		void disconnect_handler(int socket_desc);
-		void data_handler(int socket_desc, unsigned char *buf, int length);
-		websocketHeader parse_header(unsigned char *data);
+		void data_handler(int socket_desc, unsigned char *buf, unsigned int length);
+		websocketHeader parse_header(unsigned char *data, unsigned int length);
+		string read_data(int socket_desc, websocketHeader ws, unsigned char *buf, int length);
 		string generateHandshakeKey(string key);
 	protected:
 		typedef enum readyStateValues { CLOSING, CLOSED, CONNECTING, OPEN } readyStateValues;

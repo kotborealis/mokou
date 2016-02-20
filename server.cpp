@@ -1,5 +1,4 @@
 #include "server.h"
-
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,7 +46,6 @@ void Server::poll() {
 		FD_SET(listener,&read_fds);
 
 		for(set<int>::iterator it = disconnect.begin(); it != disconnect.end(); it++){
-			cout<<"Erasing socket "<<*it<<"\n";
             clients.erase(*it);
 		}
 		disconnect.clear();
@@ -99,9 +97,6 @@ void Server::error(const char *msg){
 
 void Server::closesock(int sockfd){
 	close(sockfd);
-    //clients.erase(sockfd);
-    cout<<"Added to Erasing socket "<<sockfd<<"\n";
     disconnect.insert(sockfd);
     FD_CLR(sockfd,&read_fds);
-    disconnect_handler(sockfd);
 }
