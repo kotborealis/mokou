@@ -46,6 +46,12 @@ void Server::poll() {
 		FD_ZERO(&read_fds);
 		FD_SET(listener,&read_fds);
 
+		for(set<int>::iterator it = disconnect.begin(); it != disconnect.end(); it++){
+			cout<<"Erasing socket "<<*it<<"\n";
+            clients.erase(*it);
+		}
+		disconnect.clear();
+
 		for(set<int>::iterator it = clients.begin(); it != clients.end(); it++)
             FD_SET(*it, &read_fds);
 
@@ -63,6 +69,7 @@ void Server::poll() {
 			else{
 				fcntl(clientfd, F_SETFL, O_NONBLOCK);
 				clients.insert(clientfd);
+				cout<<"Connection?\n";
 				connection_handler(clientfd, &remote_addr);
 			}
 		}
@@ -70,7 +77,7 @@ void Server::poll() {
         {
             if(FD_ISSET(*it, &read_fds))
             {
-                bytes_read = recv(*it, buf, BufferSize-1, 0);
+                bytes_read = recv(*it, buf, BufferSize, 0);
 
                 if(bytes_read <= 0)
                 {
@@ -81,23 +88,7 @@ void Server::poll() {
                 }
                 data_handler(*it,buf,bytes_read);
             }
-        }
-			/*if(FD_ISSET(i,&write_fds) && i!=listener){
-				vector<uint8_t> _wbuf = wbuf;
-				while(_wbuf.size()){
-					int ret=send(i,(char*)&_wbuf[0],_wbuf.size(),0);
-					if(ret<0){
-						error("Cannot write data to socket");
-					}
-					else if(ret==0){
-						error("Socket closed!");
-					}
-					else{
-						_wbuf.erase(_wbuf.begin(),_wbuf.begin()+ret);
-					}
-				}
-			}
-		wbuf.erase(wbuf.begin(),wbuf.end());*/
+    	}
 	}
 }
 
@@ -105,3 +96,12 @@ void Server::error(const char *msg){
     perror(msg);
     exit(1);
 };
+
+void Server::closesock(int sockfd){
+	close(sockfd);
+    //clients.erase(sockfd);
+    cout<<"Added to Erasing socket "<<sockfd<<"\n";
+    disconnect.insert(sockfd);
+    FD_CLR(sockfd,&read_fds);
+    disconnect_handler(sockfd);
+}

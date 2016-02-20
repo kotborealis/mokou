@@ -30,7 +30,10 @@ class Server{
 		void initSocket(int *socket_desc, struct sockaddr_in *server_addr, int port);
 	protected:
 		void error(const char *msg);
+		void closesock(int sockfd);
+
 		set<int> clients;
+		set<int> disconnect;
 		char buf[BufferSize];
 		int bytes_read;
 
