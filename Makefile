@@ -1,19 +1,25 @@
-CC=g++
-CFLAGS=-c -Wall -std=c++11
-LDFLAGS=
-SOURCES=base64.cpp main.cpp server.cpp websockets.cpp chat.cpp
-OBJECTS=$(SOURCES:.cpp=.o)
-EXECUTABLE=mokou
+CC := g++
+SRCDIR := src
+BUILDDIR := build
+TARGET := bin/mokou
+ 
+SRCEXT := cpp
+SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
+OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
+CFLAGS := -g -std=c++11
+#LIB := -pthread -lmongoclient -L lib -lboost_thread-mt -lboost_filesystem-mt -lboost_system-mt
+INC := -Isrc
 
-.PHONY: all clean
+$(TARGET): $(OBJECTS)
+	@echo " Linking..."
+	@echo " $(CC) $^ -o $(TARGET) $(LIB)"; $(CC) $^ -o $(TARGET) $(LIB)
 
-all: $(SOURCES) $(EXECUTABLE)
-	
-$(EXECUTABLE): $(OBJECTS) 
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
-
-.cpp.o: $(SOURCES)
-	$(CC) $(CFLAGS) $< -o $@
+$(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
+	@mkdir -p $(BUILDDIR)
+	@echo " $(CC) $(CFLAGS) $(INC) -c -o $@ $<"; $(CC) $(CFLAGS) $(INC) -c -o $@ $<
 
 clean:
-	rm -rf *.o $(EXECUTABLE)
+	@echo " Cleaning..."; 
+	@echo " $(RM) -r $(BUILDDIR) $(TARGET)"; $(RM) -r $(BUILDDIR) $(TARGET)
+
+.PHONY: clean
