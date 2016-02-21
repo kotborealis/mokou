@@ -27,7 +27,7 @@ class Server{
 		socklen_t addrlen;
 		unsigned char buf[BufferSize];
 		unsigned int bytes_read;
-
+		
 		void initSocket(int *socket_desc, struct sockaddr_in *server_addr, int port);
 	protected:
 		void error(const char *msg);

@@ -35,24 +35,23 @@ class Websockets: public Server{
 		websocketHeader parse_header(unsigned char *data, unsigned int length);
 		string read_data(int socket_desc, websocketHeader ws, unsigned char *buf, int length);
 		string generateHandshakeKey(string key);
+		void ws_send_ping(int sockfd);
+		void ws_send_pong(int sockfd);
 	protected:
 		typedef enum readyStateValues { CLOSING, CLOSED, CONNECTING, OPEN } readyStateValues;
-
 		typedef struct ws_client{
 			string ip;
 			readyStateValues readyState;
 		} ws_client;
-
 		map<int,ws_client> ws_clients;
 
-		void ws_send(int sockfd, string &data);
-		void ws_send_binary(int sockfd, string &data);
+		void ws_send(int sockfd, string data);
+		void ws_send_binary(int sockfd, string data);
+		void ws_broadcast(string data);
+		void ws_broadcast_binary(string data);
 		void ws_send_close(int sockfd);
-		void ws_send_ping(int sockfd);
-		void ws_send_pong(int sockfd);
 
-		virtual void ws_on_connect(int clientid){};
-		virtual void ws_on_close(int clientid){};
-		virtual void ws_on_message(int clientid, string &message){};
-		virtual void ws_on_data(int clientid){};
+		virtual void ws_on_connect(int clientid)=0;
+		virtual void ws_on_close(int clientid)=0;
+		virtual void ws_on_message(int clientid, string message)=0;
 };

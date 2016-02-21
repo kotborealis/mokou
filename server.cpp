@@ -67,7 +67,6 @@ void Server::poll() {
 			else{
 				fcntl(clientfd, F_SETFL, O_NONBLOCK);
 				clients.insert(clientfd);
-				cout<<"Connection?\n";
 				connection_handler(clientfd, &remote_addr);
 			}
 		}
@@ -79,8 +78,6 @@ void Server::poll() {
 
                 if(bytes_read <= 0)
                 {
-                    close(*it);
-                    clients.erase(*it);
                     disconnect_handler(*it);
                     continue;
                 }

@@ -1,7 +1,7 @@
 CC=g++
 CFLAGS=-c -Wall -std=c++11
 LDFLAGS=
-SOURCES=base64.cpp main.cpp server.cpp websockets.cpp
+SOURCES=base64.cpp main.cpp server.cpp websockets.cpp chat.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=mokou
 
