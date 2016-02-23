@@ -11,10 +11,13 @@ void Chat::ws_on_connect(int clientid){
 	chat_clients[clientid].name="";
 	chat_clients[clientid].loggedIn=false;
 	chat_clients[clientid].id=g_id++;
+	CLIENT_ID=clientid;
+	dispatch_online();
 };
 void Chat::ws_on_close(int clientid){
 	CLIENT_ID=clientid;
-	broadcast_loggedOut();
+	if(chat_clients[CLIENT_ID].loggedIn)
+		broadcast_loggedOut();
 	chat_clients.erase(clientid);
 };
 void Chat::ws_on_message(int clientid, string message){
@@ -90,14 +93,21 @@ void Chat::dispatch_loggedIn(){
 void Chat::dispatch_loggedOut(){
 	ws_send(CLIENT_ID,"{\"t\":\"loggedOut\"}");
 }
+void Chat::dispatch_online(){
+	for(auto it=chat_clients.begin();it!=chat_clients.end();it++){
+		if(it->second.loggedIn){
+			ws_send(CLIENT_ID,string("{\"t\":\"user\",\"event\":\"in\",\"user\":{\"name\":\"")+it->second.name+string("\",\"id\":")+to_string(it->second.id)+string("},\"ts\":")+to_string(time(0))+string("}"));//REFACTOR THIS SHIIT; REPLACE THIS TIME WITH ACTUAL TIME OF LOGIN; IMPLEMENT HISTORY
+		}
+	}
+}
 //---------------------END---------------------------------
 
 //-------------------BROADCAST-----------------
 void Chat::broadcast_loggedIn(){
-	ws_broadcast(string("{\"t\":\"user\",\"event\":\"in\",\"user\":{\"name\":\"")+chat_clients[CLIENT_ID].name+string("\",\"id\":")+to_string(chat_clients[CLIENT_ID].id)+string("}}"));	
+	ws_broadcast(string("{\"t\":\"user\",\"event\":\"in\",\"user\":{\"name\":\"")+chat_clients[CLIENT_ID].name+string("\",\"id\":")+to_string(chat_clients[CLIENT_ID].id)+string("},\"ts\":")+to_string(time(0))+string("}"));
 }
 void Chat::broadcast_loggedOut(){
-	ws_broadcast(string("{\"t\":\"user\",\"event\":\"out\",\"user\":{\"name\":\"")+chat_clients[CLIENT_ID].name+string("\",\"id\":")+to_string(chat_clients[CLIENT_ID].id)+string("}}"));	
+	ws_broadcast(string("{\"t\":\"user\",\"event\":\"out\",\"user\":{\"name\":\"")+chat_clients[CLIENT_ID].name+string("\",\"id\":")+to_string(chat_clients[CLIENT_ID].id)+string("},\"ts\":")+to_string(time(0))+string("}"));
 }
 void Chat::broadcast_message(string message){
 	ws_broadcast(string("{\"t\":\"msg\",\"from\":\"")+chat_clients[CLIENT_ID].name+string("\",\"text\":\"")+message+string("\",\"ts\":")+to_string(time(0))+string("}"));

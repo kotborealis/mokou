@@ -39,6 +39,7 @@ class Chat: public Websockets{
 		//dispatch
 		void dispatch_loggedIn();
 		void dispatch_loggedOut();
+		void dispatch_online();
 
 		//broadcast
 		void broadcast_loggedIn();
