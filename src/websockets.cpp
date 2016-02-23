@@ -37,7 +37,6 @@ void Websockets::data_handler(int socket_desc, unsigned char *buf, unsigned int 
 			string handshakeHeaders="HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ";
 			handshakeHeaders=handshakeHeaders+handshakeKey;
 			handshakeHeaders=handshakeHeaders+"\r\n\r\n";
-			cout<<handshakeHeaders;
 			send(socket_desc,(char*)handshakeHeaders.c_str(),handshakeHeaders.size(),0);
 			ws_clients[socket_desc].readyState=OPEN;
 			for(;buf[length-1]!='\n' && 
@@ -52,7 +51,6 @@ void Websockets::data_handler(int socket_desc, unsigned char *buf, unsigned int 
 	}
 	else if(ws_clients[socket_desc].readyState==OPEN){
 		websocketHeader ws=parse_header(buf,length);
-		cout<<"fin: "<<ws.fin<<"; mask: "<<ws.mask<<"; opcode: "<<ws.opcode<<"; size: "<<ws.size<<";\n";
 		if(ws.opcode==TEXT_FRAME || ws.opcode==BINARY_FRAME){
 			ws_on_message(socket_desc,read_data(socket_desc,ws,buf,length));
 		}

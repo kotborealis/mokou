@@ -1,5 +1,6 @@
 #include "chat.h"
 #include "jsonxx.h"
+#include <ctime>
 
 using namespace std;
 using namespace jsonxx;
@@ -10,27 +11,25 @@ void Chat::ws_on_connect(int clientid){
 	chat_clients[clientid].name="";
 	chat_clients[clientid].loggedIn=false;
 	chat_clients[clientid].id=g_id++;
-	//ws_broadcast(string("{\"t\":\"user\",\"event\":\"in\",\"user\":{\"name\":\"")+chat_clients[clientid].name+string("\",\"id\":")+to_string(chat_clients[clientid].id)+string("}}"));	
 };
 void Chat::ws_on_close(int clientid){
+	CLIENT_ID=clientid;
 	broadcast_loggedOut();
 	chat_clients.erase(clientid);
 };
 void Chat::ws_on_message(int clientid, string message){
-	//ws_broadcast(message);	
 	CLIENT_ID=clientid;
-	cout<<CLIENT_ID<<" - client id\n";
 	Object o;
 	o.parse(message);
 	if(o.has<string>("act"))
-		if(o.get<string>("act")=="login" && o.has<string>("name")){
+		if(o.get<string>("act")=="login" && o.has<string>("name"))
 			handler_login(o.get<string>("name"));
-		}
-		else if(o.get<string>("act")=="logout"){
+		else if(o.get<string>("act")=="logout")
 			handler_logout();
-		}
+		else if(o.get<string>("act")=="msg" && o.has<string>("msg"))
+			handler_message(o.get<string>("msg"));
 	else
-		dispatch_error();
+		dispatch_error(UNKNOWN_ERR);
 };
 
 
@@ -38,15 +37,13 @@ void Chat::ws_on_message(int clientid, string message){
 void Chat::handler_login(string name){
 	encode(name);
 	if(name=="" || name.size()>50){
-		dispatch_login_error(BAD_NAME);
+		dispatch_error(BAD_NAME);
 		return;
 	}
 	else{
 		for(auto it=chat_clients.begin();it!=chat_clients.end();it++){
-			cout<<it->second.name<<"=="<<name<<"\n";
-			if(it->second.name==name){
-				dispatch_login_error(ALREADY_IN);
-				cout<<"Nyet!!! (da)";
+			if(it->second.loggedIn && it->second.name==name){
+				dispatch_error(ALREADY_IN);
 				return;
 			}
 		}
@@ -59,18 +56,30 @@ void Chat::handler_login(string name){
 }
 void Chat::handler_logout(){
 	if(chat_clients[CLIENT_ID].loggedIn){
+		chat_clients[CLIENT_ID].loggedIn=false;
 		dispatch_loggedOut();
 		broadcast_loggedOut();
+	}
+}
+void Chat::handler_message(string message){
+	encode(message);
+	if(message=="" || message.size()>300){
+		dispatch_error(BAD_MESSAGE);
+		return;
+	}
+	else if(!chat_clients[CLIENT_ID].loggedIn){
+		dispatch_error(NOT_LOGGED_IN);
+		return;	
+	}
+	else{
+		broadcast_message(message);
 	}
 }
 //------------------END-----------------------
 
 //-----------------DISPATCH ERROR---------------------
-void Chat::dispatch_login_error(login_error_type error){
-	ws_send(CLIENT_ID,string("{\"result\":\"login_error\",\"id\":\"")+to_string(error)+string("\"}"));
-}
-void Chat::dispatch_error(){
-	ws_send(CLIENT_ID,string("{\"result\":\"error\"}"));
+void Chat::dispatch_error(chat_error_type error){
+	ws_send(CLIENT_ID,string("{\"result\":\"error\",\"type\":\"")+to_string(error)+string("\"}"));
 }
 //---------------------END---------------------
 
@@ -89,6 +98,9 @@ void Chat::broadcast_loggedIn(){
 }
 void Chat::broadcast_loggedOut(){
 	ws_broadcast(string("{\"t\":\"user\",\"event\":\"out\",\"user\":{\"name\":\"")+chat_clients[CLIENT_ID].name+string("\",\"id\":")+to_string(chat_clients[CLIENT_ID].id)+string("}}"));	
+}
+void Chat::broadcast_message(string message){
+	ws_broadcast(string("{\"t\":\"msg\",\"from\":\"")+chat_clients[CLIENT_ID].name+string("\",\"text\":\"")+message+string("\",\"ts\":")+to_string(time(0))+string("}"));
 }
 //------------------END-------------------
 

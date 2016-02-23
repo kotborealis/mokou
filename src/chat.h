@@ -17,22 +17,24 @@ class Chat: public Websockets{
 		} chat_client;
 		map<int,chat_client> chat_clients;
 
-		typedef enum login_error_type{
+		typedef enum chat_error_type{
 			ALREADY_IN,
 			BAD_PASSWORD,
 			BAD_NAME,
-			UNKNOWN_ERR
-		} login_error_type;
+			BAD_MESSAGE,
+			NOT_LOGGED_IN,
+			UNKNOWN_ERR,
+		} chat_error_type;
 
 		void encode(string&);
 
 		//handlers
 		void handler_login(string login);
 		void handler_logout();
+		void handler_message(string message);
 
 		//dispatch error
-		void dispatch_login_error(login_error_type error);
-		void dispatch_error();
+		void dispatch_error(chat_error_type error);
 
 		//dispatch
 		void dispatch_loggedIn();
@@ -41,6 +43,7 @@ class Chat: public Websockets{
 		//broadcast
 		void broadcast_loggedIn();
 		void broadcast_loggedOut();
+		void broadcast_message(string message);
 	protected:
 		void ws_on_connect(int clientid);
 		void ws_on_close(int clientid);
