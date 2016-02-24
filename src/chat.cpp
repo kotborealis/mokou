@@ -15,6 +15,11 @@ void Chat::ws_on_connect(int clientid){
 	chat_clients[CLIENT_ID].name="";
 	chat_clients[CLIENT_ID].loggedIn=false;
 	chat_clients[CLIENT_ID].id=g_id++;
+
+	for(auto it=chat_clients.begin();it!=chat_clients.end();it++)
+			if(it->second.loggedIn)
+				ws_send(CLIENT_ID,json_event_user("in",it->second.name,it->second.id,time(0)));
+
 	vector<string> h=chat_history.getMessage(150);
 	for(auto it=h.begin();it!=h.end();it++)
 		ws_send(CLIENT_ID,*it);
