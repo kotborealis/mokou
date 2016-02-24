@@ -1,4 +1,5 @@
 #include "chat.h"
+#include "chat_history.h"
 #include "jsonxx.h"
 #include <ctime>
 
@@ -12,12 +13,11 @@ void Chat::ws_on_connect(int clientid){
 	chat_clients[clientid].loggedIn=false;
 	chat_clients[clientid].id=g_id++;
 	CLIENT_ID=clientid;
-	
 }
 void Chat::ws_on_close(int clientid){
 	CLIENT_ID=clientid;
 	if(chat_clients[CLIENT_ID].loggedIn)
-		
+		//TODO:!!!!!!!!!!!!!!!!!!!	
 	chat_clients.erase(clientid);
 }
 void Chat::ws_on_message(int clientid, string message){
