@@ -91,8 +91,8 @@ void Websockets::ws_send(int sockfd, string data){
 	}
 	else if((data.length())<=65535){
 		send_buf.push_back(126);
-		send_buf.push_back(data.length()&0xFF);
 		send_buf.push_back((data.length()>>8)&0xFF);
+		send_buf.push_back(data.length()&0xFF);
 	}
 	else{
 		return;
@@ -113,8 +113,8 @@ void Websockets::ws_send_binary(int sockfd, string data){
 	}
 	else if((data.length())<=65535){
 		send_buf.push_back(126);
-		send_buf.push_back(data.length()&0xFF);
 		send_buf.push_back((data.length()>>8)&0xFF);
+		send_buf.push_back(data.length()&0xFF);
 	}
 	else{
 		return;
