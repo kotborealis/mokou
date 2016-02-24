@@ -13,13 +13,13 @@ void Chat::ws_on_connect(int clientid){
 	chat_clients[clientid].id=g_id++;
 	CLIENT_ID=clientid;
 	
-};
+}
 void Chat::ws_on_close(int clientid){
 	CLIENT_ID=clientid;
 	if(chat_clients[CLIENT_ID].loggedIn)
 		
 	chat_clients.erase(clientid);
-};
+}
 void Chat::ws_on_message(int clientid, string message){
 	CLIENT_ID=clientid;
 	Object o;
@@ -33,7 +33,7 @@ void Chat::ws_on_message(int clientid, string message){
 			
 	else
 		
-};
+}
 
 string Chat::json_message(string from, string text, time_t ts){
 	Object data;
@@ -42,7 +42,8 @@ string Chat::json_message(string from, string text, time_t ts){
 	data<<"text"<<message;
 	data<<"ts"<<to_string(ts);
 	return data.json();
-};
+}
+
 string Chat::json_event_user(string event, string name, int user_id, time_t ts){
 	Object data;
 	data<<"t"<<"user";
@@ -54,13 +55,22 @@ string Chat::json_event_user(string event, string name, int user_id, time_t ts){
 	data<<"ts"<<to_string(ts);
 	return data.json();
 }
+
 string Chat::json_error(chat_error_type error){
 	Object data;
 	data<<"t"<<"err";
 	data<<"err"<<to_string(error);
 	data<<"ts"<<to_string(ts);
 	return data.json();
-};
+}
+
+void Chat::send(string data){
+	ws_send(CLIENT_ID,data);
+}
+
+void Chat::broadcast(string data){
+	ws_broadcast(CLIENT_ID,data);
+}
 
 
 void Chat::encode(std::string& data) {
