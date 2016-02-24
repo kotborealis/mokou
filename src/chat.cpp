@@ -12,12 +12,12 @@ void Chat::ws_on_connect(int clientid){
 	chat_clients[clientid].loggedIn=false;
 	chat_clients[clientid].id=g_id++;
 	CLIENT_ID=clientid;
-	dispatch_online();
+	
 };
 void Chat::ws_on_close(int clientid){
 	CLIENT_ID=clientid;
 	if(chat_clients[CLIENT_ID].loggedIn)
-		broadcast_loggedOut();
+		
 	chat_clients.erase(clientid);
 };
 void Chat::ws_on_message(int clientid, string message){
@@ -26,93 +26,42 @@ void Chat::ws_on_message(int clientid, string message){
 	o.parse(message);
 	if(o.has<string>("act"))
 		if(o.get<string>("act")=="login" && o.has<string>("name"))
-			handler_login(o.get<string>("name"));
+			
 		else if(o.get<string>("act")=="logout")
-			handler_logout();
+			
 		else if(o.get<string>("act")=="msg" && o.has<string>("msg"))
-			handler_message(o.get<string>("msg"));
+			
 	else
-		dispatch_error(UNKNOWN_ERR);
+		
 };
 
+string Chat::json_message(string from, string text, time_t ts){
+	Object data;
+	data<<"t"<<"msg";
+	data<<"from"<<from;
+	data<<"text"<<message;
+	data<<"ts"<<to_string(ts);
+	return data.json();
+};
+string Chat::json_event_user(string event, string name, int user_id, time_t ts){
+	Object data;
+	data<<"t"<<"user";
+	data<<"event"<<event;
+	Object user;
+	user<<"name"<<name;
+	user<<"id"<<to_string(user_id);
+	data<<"user"<<user;
+	data<<"ts"<<to_string(ts);
+	return data.json();
+}
+string Chat::json_error(chat_error_type error){
+	Object data;
+	data<<"t"<<"err";
+	data<<"err"<<to_string(error);
+	data<<"ts"<<to_string(ts);
+	return data.json();
+};
 
-//-----------------HANDLERS------------------
-void Chat::handler_login(string name){
-	encode(name);
-	if(name=="" || name.size()>50){
-		dispatch_error(BAD_NAME);
-		return;
-	}
-	else{
-		for(auto it=chat_clients.begin();it!=chat_clients.end();it++){
-			if(it->second.loggedIn && it->second.name==name){
-				dispatch_error(ALREADY_IN);
-				return;
-			}
-		}
-	}
-	chat_clients[CLIENT_ID].name=name;
-	chat_clients[CLIENT_ID].loggedIn=true;
-	dispatch_loggedIn();
-	broadcast_loggedIn();
-	return;
-}
-void Chat::handler_logout(){
-	if(chat_clients[CLIENT_ID].loggedIn){
-		chat_clients[CLIENT_ID].loggedIn=false;
-		dispatch_loggedOut();
-		broadcast_loggedOut();
-	}
-}
-void Chat::handler_message(string message){
-	encode(message);
-	if(message=="" || message.size()>300){
-		dispatch_error(BAD_MESSAGE);
-		return;
-	}
-	else if(!chat_clients[CLIENT_ID].loggedIn){
-		dispatch_error(NOT_LOGGED_IN);
-		return;	
-	}
-	else{
-		broadcast_message(message);
-	}
-}
-//------------------END-----------------------
-
-//-----------------DISPATCH ERROR---------------------
-void Chat::dispatch_error(chat_error_type error){
-	ws_send(CLIENT_ID,string("{\"result\":\"error\",\"type\":\"")+to_string(error)+string("\"}"));
-}
-//---------------------END---------------------
-
-//------------------DISPATCH----------------------------
-void Chat::dispatch_loggedIn(){
-	ws_send(CLIENT_ID,"{\"t\":\"loggedIn\"}");
-}
-void Chat::dispatch_loggedOut(){
-	ws_send(CLIENT_ID,"{\"t\":\"loggedOut\"}");
-}
-void Chat::dispatch_online(){
-	for(auto it=chat_clients.begin();it!=chat_clients.end();it++){
-		if(it->second.loggedIn){
-			ws_send(CLIENT_ID,string("{\"t\":\"user\",\"event\":\"in\",\"user\":{\"name\":\"")+it->second.name+string("\",\"id\":")+to_string(it->second.id)+string("},\"ts\":")+to_string(time(0))+string("}"));//REFACTOR THIS SHIIT; REPLACE THIS TIME WITH ACTUAL TIME OF LOGIN; IMPLEMENT HISTORY
-		}
-	}
-}
-//---------------------END---------------------------------
-
-//-------------------BROADCAST-----------------
-void Chat::broadcast_loggedIn(){
-	ws_broadcast(string("{\"t\":\"user\",\"event\":\"in\",\"user\":{\"name\":\"")+chat_clients[CLIENT_ID].name+string("\",\"id\":")+to_string(chat_clients[CLIENT_ID].id)+string("},\"ts\":")+to_string(time(0))+string("}"));
-}
-void Chat::broadcast_loggedOut(){
-	ws_broadcast(string("{\"t\":\"user\",\"event\":\"out\",\"user\":{\"name\":\"")+chat_clients[CLIENT_ID].name+string("\",\"id\":")+to_string(chat_clients[CLIENT_ID].id)+string("},\"ts\":")+to_string(time(0))+string("}"));
-}
-void Chat::broadcast_message(string message){
-	ws_broadcast(string("{\"t\":\"msg\",\"from\":\"")+chat_clients[CLIENT_ID].name+string("\",\"text\":\"")+message+string("\",\"ts\":")+to_string(time(0))+string("}"));
-}
-//------------------END-------------------
 
 void Chat::encode(std::string& data) {
     std::string buffer;
