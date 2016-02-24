@@ -10,6 +10,6 @@ class Chat_History{
 		Chat_History(){};
 		void pushMessage(string json);
 		vector<string> getMessage(int count);
-	private:
+	private:	
 		vector<string> history;
 };

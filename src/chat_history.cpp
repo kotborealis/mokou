@@ -13,5 +13,7 @@ vector<string> Chat_History::getMessage(int count){
 	for(int i=(count<history.size())?(history.size()-count):0;i<history.size();i++){
 		get.push_back(history[i]);
 	}
+	for(;get.size()>200;)
+		get.erase(get.begin());
 	return get;
 }

@@ -6,18 +6,23 @@
 using namespace std;
 using namespace jsonxx;
 
-Chat::Chat(int sp): Websockets(sp){};
+Chat::Chat(int sp): Websockets(sp){
+	
+};
 
 void Chat::ws_on_connect(int clientid){
-	chat_clients[clientid].name="";
-	chat_clients[clientid].loggedIn=false;
-	chat_clients[clientid].id=g_id++;
 	CLIENT_ID=clientid;
+	chat_clients[CLIENT_ID].name="";
+	chat_clients[CLIENT_ID].loggedIn=false;
+	chat_clients[CLIENT_ID].id=g_id++;
+	vector<string> h=chat_history.getMessage(150);
+	for(auto it=h.begin();it!=h.end();it++)
+		ws_send(CLIENT_ID,*it);
 }
 void Chat::ws_on_close(int clientid){
 	CLIENT_ID=clientid;
 	if(chat_clients[CLIENT_ID].loggedIn)
-		//TODO:!!!!!!!!!!!!!!!!!!!	
+		handler_logout();
 	chat_clients.erase(clientid);
 }
 void Chat::ws_on_message(int clientid, string message){
@@ -53,6 +58,9 @@ void Chat::handler_login(string name){
 	chat_clients[CLIENT_ID].loggedIn=true;
 	ws_send(CLIENT_ID,json_event("loggedIn"));
 	ws_broadcast(json_event_user("in",chat_clients[CLIENT_ID].name,chat_clients[CLIENT_ID].id,time(0)));
+	string msg=json_event_user_msg("in",chat_clients[CLIENT_ID].name,time(0));
+	ws_broadcast(msg);
+	chat_history.pushMessage(msg);
 	return;
 }
 
@@ -61,6 +69,9 @@ void Chat::handler_logout(){
 		chat_clients[CLIENT_ID].loggedIn=false;
 		ws_send(CLIENT_ID,json_event("loggedOut"));
 		ws_broadcast(json_event_user("out",chat_clients[CLIENT_ID].name,chat_clients[CLIENT_ID].id,time(0)));
+		string msg=json_event_user_msg("out",chat_clients[CLIENT_ID].name,time(0));
+		ws_broadcast(msg);
+		chat_history.pushMessage(msg);
 	}
 }
 
@@ -75,7 +86,9 @@ void Chat::handler_message(string message){
 		return;	
 	}
 	else{
-		ws_broadcast(json_message(chat_clients[CLIENT_ID].name,message,time(0)));
+		string msg=json_message(chat_clients[CLIENT_ID].name,message,time(0));
+		ws_broadcast(msg);
+		chat_history.pushMessage(msg);
 	}
 }
 
@@ -98,6 +111,18 @@ string Chat::json_event_user(string event, string name, int user_id, time_t ts){
 	data<<"user"<<user;
 	data<<"ts"<<to_string(ts);
 	return data.json();
+}
+
+string Chat::json_event_user_msg(string event, string name, time_t ts){
+	Object data;
+	data<<"t"<<"msg";
+	data<<"from"<<"";
+	if(event=="in")
+		data<<"text"<<"В чат входит <b>"+string(name)+"</b>";
+	else
+		data<<"text"<<"<b>"+string(name)+"</b> выходит из чата";
+	data<<"ts"<<to_string(ts);
+	return data.json();	
 }
 
 string Chat::json_event(string type){

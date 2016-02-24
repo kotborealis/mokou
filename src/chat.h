@@ -1,6 +1,7 @@
 #pragma once
 
 #include "websockets.h"
+#include "chat_history.h"
 #include <map>
 
 class Chat: public Websockets{
@@ -17,6 +18,8 @@ class Chat: public Websockets{
 		} chat_client;
 		map<int,chat_client> chat_clients;
 
+		Chat_History chat_history = Chat_History();
+
 		typedef enum chat_error_type{
 			ALREADY_IN,
 			BAD_PASSWORD,
@@ -30,6 +33,7 @@ class Chat: public Websockets{
 
 		string json_message(string from, string text, time_t ts);
 		string json_event_user(string event, string name, int user_id, time_t ts);
+		string json_event_user_msg(string event, string name, time_t ts);
 		string json_event(string type);
 		string json_error(chat_error_type error);
 
