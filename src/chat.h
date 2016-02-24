@@ -28,23 +28,14 @@ class Chat: public Websockets{
 
 		void encode(string&);
 
-		//handlers
-		void handler_login(string login);
+		string json_message(string from, string text, time_t ts);
+		string json_event_user(string event, string name, int user_id, time_t ts);
+		string json_event(string type);
+		string json_error(chat_error_type error);
+
+		void handler_login(string name);
 		void handler_logout();
 		void handler_message(string message);
-
-		//dispatch error
-		void dispatch_error(chat_error_type error);
-
-		//dispatch
-		void dispatch_loggedIn();
-		void dispatch_loggedOut();
-		void dispatch_online();
-
-		//broadcast
-		void broadcast_loggedIn();
-		void broadcast_loggedOut();
-		void broadcast_message(string message);
 	protected:
 		void ws_on_connect(int clientid);
 		void ws_on_close(int clientid);
