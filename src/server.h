@@ -10,7 +10,7 @@
 #include <set>
 #include <algorithm>
 
-#define BufferSize 128
+#define BufferSize 512
 
 using namespace std;
 

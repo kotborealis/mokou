@@ -1,6 +1,7 @@
 #include "chat.h"
 #include "chat_history.h"
 #include "jsonxx.h"
+#include "utils.h"
 #include <ctime>
 
 using namespace std;
@@ -46,8 +47,8 @@ void Chat::ws_on_message(int clientid, string message){
 }
 
 void Chat::handler_login(string name){
-	encode(name);
-	if(name=="" || name.size()>50 || name.size()<3){
+	utils::encodeHTML(name);
+	if(name=="" || utils::Utf8StringLength(name)>50 || utils::Utf8StringLength(name)<3){
 		ws_send(CLIENT_ID,json_error(BAD_NAME));
 		return;
 	}
@@ -81,8 +82,8 @@ void Chat::handler_logout(){
 }
 
 void Chat::handler_message(string message){
-	encode(message);
-	if(message=="" || message.size()>300 || message.size()==0){
+	utils::encodeHTML(message);
+	if(message=="" || utils::Utf8StringLength(message)>300 || utils::Utf8StringLength(message)==0){
 		ws_send(CLIENT_ID,json_error(BAD_MESSAGE));
 		return;
 	}
@@ -141,21 +142,4 @@ string Chat::json_error(chat_error_type error){
 	data<<"t"<<"err";
 	data<<"err"<<to_string(error);
 	return data.json();
-}
-
-
-void Chat::encode(std::string& data) {
-    std::string buffer;
-    buffer.reserve(data.size());
-    for(size_t pos = 0; pos != data.size(); ++pos) {
-        switch(data[pos]) {
-            case '&':  buffer.append("&amp;");       break;
-            case '\"': buffer.append("&quot;");      break;
-            case '\'': buffer.append("&apos;");      break;
-            case '<':  buffer.append("&lt;");        break;
-            case '>':  buffer.append("&gt;");        break;
-            default:   buffer.append(&data[pos], 1); break;
-        }
-    }
-    data.swap(buffer);
 }

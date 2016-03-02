@@ -5,7 +5,11 @@
 using namespace std;
 
 int main(int argc, char** argv){
-	Chat s = Chat(8090);
+	int port=8090;
+	if(argc>=2)
+		port=atoi(argv[1]);
+
+	Chat s = Chat(port);
 	s.poll();
 	return 0;
 }

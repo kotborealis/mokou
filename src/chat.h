@@ -29,8 +29,6 @@ class Chat: public Websockets{
 			UNKNOWN_ERR,
 		} chat_error_type;
 
-		void encode(string&);
-
 		string json_message(string from, string text, time_t ts);
 		string json_event_user(string event, string name, int user_id, time_t ts);
 		string json_event_user_msg(string event, string name, time_t ts);
