@@ -561,47 +561,44 @@ namespace json {
 
     std::string tag( unsigned format, unsigned depth, const std::string &name, const jsonxx::Value &t) {
         std::stringstream ss;
-        const std::string tab(depth, '\t');
 
         if( !name.empty() )
-            ss << tab << '\"' << escape_string( name ) << '\"' << ':' << ' ';
-        else
-            ss << tab;
+            ss <<  '\"' << escape_string( name ) << '\"' << ':' << ' ';
 
         switch( t.type_ )
         {
             default:
             case jsonxx::Value::NULL_:
                 ss << "null";
-                return ss.str() + ",\n";
+                return ss.str() + ", ";
 
             case jsonxx::Value::BOOL_:
                 ss << ( t.bool_value_ ? "true" : "false" );
-                return ss.str() + ",\n";
+                return ss.str() + ", ";
 
             case jsonxx::Value::ARRAY_:
-                ss << "[\n";
+                ss << "[";
                 for(Array::container::const_iterator it = t.array_value_->values().begin(),
                     end = t.array_value_->values().end(); it != end; ++it )
                   ss << tag( format, depth+1, std::string(), **it );
-                return remove_last_comma( ss.str() ) + tab + "]" ",\n";
+                return remove_last_comma( ss.str() ) + "]" ", ";
 
             case jsonxx::Value::STRING_:
                 ss << '\"' << escape_string( *t.string_value_ ) << '\"';
-                return ss.str() + ",\n";
+                return ss.str() + ", ";
 
             case jsonxx::Value::OBJECT_:
-                ss << "{\n";
+                ss << "{";
                 for(Object::container::const_iterator it=t.object_value_->kv_map().begin(),
                     end = t.object_value_->kv_map().end(); it != end ; ++it)
                   ss << tag( format, depth+1, it->first, *it->second );
-                return remove_last_comma( ss.str() ) + tab + "}" ",\n";
+                return remove_last_comma( ss.str() ) + "}" ", ";
 
             case jsonxx::Value::NUMBER_:
                 // max precision
                 ss << std::setprecision(std::numeric_limits<long double>::digits10 + 1);
                 ss << t.number_value_;
-                return ss.str() + ",\n";
+                return ss.str() + ", ";
         }
     }
 } // namespace jsonxx::anon::json
@@ -749,49 +746,48 @@ std::string close_tag( unsigned format, char type, const std::string &name ) {
 
 std::string tag( unsigned format, unsigned depth, const std::string &name, const jsonxx::Value &t, const std::string &attr = std::string() ) {
     std::stringstream ss;
-    const std::string tab(depth, '\t');
 
     switch( t.type_ )
     {
         default:
         case jsonxx::Value::NULL_:
-            return tab + open_tag( format, '0', name, " /" ) + '\n';
+            return open_tag( format, '0', name, " /" );
 
         case jsonxx::Value::BOOL_:
             ss << ( t.bool_value_ ? "true" : "false" );
-            return tab + open_tag( format, 'b', name, std::string(), format == jsonxx::JXMLex ? ss.str() : std::string() )
+            return open_tag( format, 'b', name, std::string(), format == jsonxx::JXMLex ? ss.str() : std::string() )
                        + ss.str()
-                       + close_tag( format, 'b', name ) + '\n';
+                       + close_tag( format, 'b', name );
 
         case jsonxx::Value::ARRAY_:
             for(Array::container::const_iterator it = t.array_value_->values().begin(),
                 end = t.array_value_->values().end(); it != end; ++it )
               ss << tag( format, depth+1, std::string(), **it );
-            return tab + open_tag( format, 'a', name, attr ) + '\n'
+            return open_tag( format, 'a', name, attr )
                        + ss.str()
-                 + tab + close_tag( format, 'a', name ) + '\n';
+                 + close_tag( format, 'a', name );
 
         case jsonxx::Value::STRING_:
             ss << escape_tag( *t.string_value_, format );
-            return tab + open_tag( format, 's', name, std::string(), format == jsonxx::JXMLex ? ss.str() : std::string() )
+            return open_tag( format, 's', name, std::string(), format == jsonxx::JXMLex ? ss.str() : std::string() )
                        + ss.str()
-                       + close_tag( format, 's', name ) + '\n';
+                       + close_tag( format, 's', name );
 
         case jsonxx::Value::OBJECT_:
             for(Object::container::const_iterator it=t.object_value_->kv_map().begin(),
                 end = t.object_value_->kv_map().end(); it != end ; ++it)
               ss << tag( format, depth+1, it->first, *it->second );
-            return tab + open_tag( format, 'o', name, attr ) + '\n'
+            return open_tag( format, 'o', name, attr )
                        + ss.str()
-                 + tab + close_tag( format, 'o', name ) + '\n';
+                 + close_tag( format, 'o', name );
 
         case jsonxx::Value::NUMBER_:
             // max precision
             ss << std::setprecision(std::numeric_limits<long double>::digits10 + 1);
             ss << t.number_value_;
-            return tab + open_tag( format, 'n', name, std::string(), format == jsonxx::JXMLex ? ss.str() : std::string() )
+            return open_tag( format, 'n', name, std::string(), format == jsonxx::JXMLex ? ss.str() : std::string() )
                        + ss.str()
-                       + close_tag( format, 'n', name ) + '\n';
+                       + close_tag( format, 'n', name );
     }
 }
 
