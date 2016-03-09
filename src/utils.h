@@ -19,6 +19,17 @@ class utils{
 		    }
 		    data.swap(buffer);
 		}
+		static void escapeString(std::string& data){
+			std::string buffer;
+		    buffer.reserve(data.size());
+		    for(size_t pos = 0; pos != data.size(); ++pos) {
+		        switch(data[pos]) {
+		            case '"': buffer.append("\\\"");      break;
+		            default:   buffer.append(&data[pos], 1); break;
+		        }
+		    }
+		    data.swap(buffer);
+		}
 
 		static int Utf8StringLength(string s_){
 			const char* s=s_.c_str();
