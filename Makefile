@@ -8,8 +8,8 @@ SRCEXT := cpp
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 CFLAGS := -g -std=c++11
-LIB := 
-INC := -I$(SRCDIR) -I$(SRCDIR)/$(LIBDIR)
+LIB := /usr/local/lib/libhiredis.a
+INC := -I$(SRCDIR) -I$(SRCDIR)/$(LIBDIR) -I/usr/local/include/hiredis
 
 $(TARGET): $(OBJECTS)
 	@echo " Linking..."

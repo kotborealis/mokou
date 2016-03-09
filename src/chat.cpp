@@ -1,5 +1,5 @@
 #include "chat.h"
-#include "chat_history.h"
+#include "chat_db.h"
 #include "jsonxx.h"
 #include "utils.h"
 #include <ctime>
@@ -21,7 +21,7 @@ void Chat::ws_on_connect(int clientid){
 			if(it->second.loggedIn)
 				ws_send(CLIENT_ID,json_event_user("in",it->second.name,it->second.id,time(0)));
 
-	vector<string> h=chat_history.getMessage(150);
+	vector<string> h=chat_db->getLastMessages(200);
 	for(auto it=h.begin();it!=h.end();it++)
 		ws_send(CLIENT_ID,*it);
 }
@@ -66,7 +66,7 @@ void Chat::handler_login(string name){
 	ws_broadcast(json_event_user("in",chat_clients[CLIENT_ID].name,chat_clients[CLIENT_ID].id,time(0)));
 	string msg=json_event_user_msg("in",chat_clients[CLIENT_ID].name,time(0));
 	ws_broadcast(msg);
-	chat_history.pushMessage(msg);
+	chat_db->pushMessage(msg);
 	return;
 }
 
@@ -77,7 +77,7 @@ void Chat::handler_logout(){
 		ws_broadcast(json_event_user("out",chat_clients[CLIENT_ID].name,chat_clients[CLIENT_ID].id,time(0)));
 		string msg=json_event_user_msg("out",chat_clients[CLIENT_ID].name,time(0));
 		ws_broadcast(msg);
-		chat_history.pushMessage(msg);
+		chat_db->pushMessage(msg);
 	}
 }
 
@@ -94,7 +94,7 @@ void Chat::handler_message(string message){
 	else{
 		string msg=json_message(chat_clients[CLIENT_ID].name,message,time(0));
 		ws_broadcast(msg);
-		chat_history.pushMessage(msg);
+		chat_db->pushMessage(msg);
 	}
 }
 

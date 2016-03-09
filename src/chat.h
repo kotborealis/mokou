@@ -1,7 +1,7 @@
 #pragma once
 
 #include "websockets.h"
-#include "chat_history.h"
+#include "chat_db.h"
 #include <map>
 
 class Chat: public Websockets{
@@ -18,7 +18,7 @@ class Chat: public Websockets{
 		} chat_client;
 		map<int,chat_client> chat_clients;
 
-		Chat_History chat_history = Chat_History();
+		Chat_db *chat_db = new Chat_db("127.0.0.1",6379);//TODO: ADD DESTRUCTOR
 
 		typedef enum chat_error_type{
 			ALREADY_IN,
