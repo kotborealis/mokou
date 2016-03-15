@@ -17,7 +17,7 @@ Chat_db::Chat_db(string ip,int port){
 }
 vector<string> Chat_db::getLastMessages(int count){
 	vector<string> v;
-	reply=(redisReply*)redisCommand(c,"LRANGE mokou:messages 0 %d",count);
+	reply=(redisReply*)redisCommand(c,"LRANGE mokou:messages %d -1",-1*count);
 	if(reply->type != REDIS_REPLY_ARRAY){
 		e_log("Returned non-array object from lrange");
 	}
@@ -32,5 +32,5 @@ vector<string> Chat_db::getLastMessages(int count){
 }
 void Chat_db::pushMessage(string msg){
 	i_log(msg);
-	reply=(redisReply*)redisCommand(c,"LPUSH mokou:messages %s",msg.c_str());
+	reply=(redisReply*)redisCommand(c,"RPUSH mokou:messages %s",msg.c_str());
 }
