@@ -2,38 +2,23 @@
 
 #include "websockets.h"
 #include "chat_db.h"
+#include "chat_client.h"
+#include "chat_gen.h"
+#include "chat_error.h"
 #include <map>
+#include <string>
+
+using namespace std;
 
 class Chat: public Websockets{
 	public:
 		Chat(int sp);
-	private:
-		int g_id=0;
+
 		int CLIENT_ID;
+		int gid=0;
 
-		typedef struct chat_client{
-			string name;
-			bool loggedIn;
-			int id;
-		} chat_client;
-		map<int,chat_client> chat_clients;
-
-		Chat_db *chat_db = new Chat_db("127.0.0.1",6379);//TODO: ADD DESTRUCTOR
-
-		typedef enum chat_error_type{
-			ALREADY_IN,
-			BAD_PASSWORD,
-			BAD_NAME,
-			BAD_MESSAGE,
-			NOT_LOGGED_IN,
-			UNKNOWN_ERR,
-		} chat_error_type;
-
-		string json_message(string from, string text, time_t ts);
-		string json_event_user(string event, string name, int user_id, time_t ts);
-		string json_event_user_msg(string event, string name, time_t ts);
-		string json_event(string type);
-		string json_error(chat_error_type error);
+		map<int,Chat_Client*> chat_clients;
+		Chat_db *chat_db = new Chat_db("127.0.0.1",6379);
 
 		void handler_login(string name);
 		void handler_logout();

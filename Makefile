@@ -26,5 +26,4 @@ clean:
 clean_all:
 	@echo " Cleaning all...";
 	@echo " $(RM) -r $(BUILDDIR) $(TARGET)"; $(RM) -r $(BUILDDIR) $(TARGET)
-
 .PHONY: clean
