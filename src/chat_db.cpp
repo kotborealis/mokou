@@ -15,7 +15,7 @@ Chat_db::Chat_db(string ip,int port){
 	}
 	i_log("Connected");
 }
-vector<string> Chat_db::getLastMessages(int count){
+vector<string> Chat_db::getMessages(int count){
 	vector<string> v;
 	reply=(redisReply*)redisCommand(c,"LRANGE mokou:messages %d -1",-1*count);
 	if(reply->type != REDIS_REPLY_ARRAY){
@@ -30,7 +30,32 @@ vector<string> Chat_db::getLastMessages(int count){
 	}
 	return v;
 }
-void Chat_db::pushMessage(string msg){
+void Chat_db::addMessage(string msg){
 	i_log(msg);
 	reply=(redisReply*)redisCommand(c,"RPUSH mokou:messages %s",msg.c_str());
+}
+
+vector<string> Chat_db::getOnline(){
+	vector<string> v;
+	reply=(redisReply*)redisCommand(c,"HGETALL mokou:online");
+	if(reply->type != REDIS_REPLY_ARRAY){
+		e_log("Returned non-array object from hgetall");
+	}
+	else{
+		v.reserve(reply->elements);
+		i_log(to_string(reply->elements));
+		for(int i=0;i<reply->elements;i+=2){
+			i_log(reply->element[i]->str);
+			v.push_back(reply->element[i]->str);
+		}
+	}
+	return v;
+}
+
+void Chat_db::addOnline(string token, string data){
+
+}
+
+void Chat_db::removeOnline(string token){
+
 }
