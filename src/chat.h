@@ -23,6 +23,8 @@ class Chat: public Websockets{
 		void handler_login(string name);
 		void handler_logout();
 		void handler_message(string message);
+
+		void send(string message);
 	protected:
 		void ws_on_connect(int clientid);
 		void ws_on_close(int clientid);

@@ -19,11 +19,11 @@ void Chat::ws_on_connect(int clientid){
 
 	for(auto it=chat_clients.begin();it!=chat_clients.end();it++)
 			if(it->second->loggedIn)
-				ws_send(CLIENT_ID,Chat_Gen::user(it->second,time(0)));
+				send(Chat_Gen::user(it->second,time(0)));
 
 	vector<string> h=chat_db->getMessages(200);
 	for(auto it=h.begin();it!=h.end();it++)
-		ws_send(CLIENT_ID,*it);
+		send(*it);
 }
 void Chat::ws_on_close(int clientid){
 	CLIENT_ID=clientid;
@@ -43,26 +43,26 @@ void Chat::ws_on_message(int clientid, string message){
 		else if(o.get<string>("act")=="msg" && o.has<string>("msg"))
 			handler_message(o.get<string>("msg"));
 	else
-		ws_send(CLIENT_ID,Chat_Gen::error(UNKNOWN_ERR));
+		send(Chat_Gen::error(UNKNOWN_ERR));
 }
 
 void Chat::handler_login(string name){
 	utils::encodeHTML(name);
 	if(name=="" || utils::Utf8StringLength(name)>50 || utils::Utf8StringLength(name)<3){
-		ws_send(CLIENT_ID,Chat_Gen::error(BAD_NAME));
+		send(Chat_Gen::error(BAD_NAME));
 		return;
 	}
 	else{
 		for(auto it=chat_clients.begin();it!=chat_clients.end();it++){
 			if(it->second->loggedIn && it->second->username==name){
-				ws_send(CLIENT_ID,Chat_Gen::error(ALREADY_IN));
+				send(Chat_Gen::error(ALREADY_IN));
 				return;
 			}
 		}
 	}
 	chat_clients[CLIENT_ID]->username=name;
 	chat_clients[CLIENT_ID]->loggedIn=true;
-	ws_send(CLIENT_ID,Chat_Gen::event("loggedIn"));
+	send(Chat_Gen::event("loggedIn"));
 	ws_broadcast(Chat_Gen::user(chat_clients[CLIENT_ID],time(0)));
 	string msg=Chat_Gen::message(chat_clients[CLIENT_ID],"<i>В чат входит <b>"+string(chat_clients[CLIENT_ID]->username)+"</b></i>",true,time(0));
 	ws_broadcast(msg);
@@ -73,7 +73,7 @@ void Chat::handler_login(string name){
 void Chat::handler_logout(){
 	if(chat_clients[CLIENT_ID]->loggedIn){
 		chat_clients[CLIENT_ID]->loggedIn=false;
-		ws_send(CLIENT_ID,Chat_Gen::event("loggedOut"));
+		send(Chat_Gen::event("loggedOut"));
 		ws_broadcast(Chat_Gen::user(chat_clients[CLIENT_ID],time(0)));
 		string msg=Chat_Gen::message(chat_clients[CLIENT_ID],"<i><b>"+string(chat_clients[CLIENT_ID]->username)+"</b> выходит из чата</i>",true,time(0));
 		ws_broadcast(msg);
@@ -84,11 +84,11 @@ void Chat::handler_logout(){
 void Chat::handler_message(string message){
 	utils::encodeHTML(message);
 	if(message=="" || utils::Utf8StringLength(message)>300 || utils::Utf8StringLength(message)==0){
-		ws_send(CLIENT_ID,Chat_Gen::error(BAD_MESSAGE));
+		send(Chat_Gen::error(BAD_MESSAGE));
 		return;
 	}
 	else if(!chat_clients[CLIENT_ID]->loggedIn){
-		ws_send(CLIENT_ID,Chat_Gen::error(NOT_LOGGED_IN));
+		send(Chat_Gen::error(NOT_LOGGED_IN));
 		return;	
 	}
 	else{
@@ -96,4 +96,8 @@ void Chat::handler_message(string message){
 		ws_broadcast(msg);
 		chat_db->addMessage(msg);
 	}
+}
+
+void Chat::send(string message){
+	ws_send(CLIENT_ID,message);
 }
