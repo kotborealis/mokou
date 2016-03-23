@@ -38,6 +38,15 @@ class Chat_db{
 		 * @param {string} token
 		 */
 		void removeOnline(string token);
+
+		/**
+		 * Create user session by token
+		 */
+		void createSession(string token);
+		/**
+		 * Set expire on session
+		 */
+		void exprireSession(string token, int expire);
 	private:
 		redisReply *reply;
 		redisContext *c;

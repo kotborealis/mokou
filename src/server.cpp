@@ -1,4 +1,5 @@
 #include "server.h"
+#include "debug.h"
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,7 +20,7 @@ Server::Server(int sp){
 	server_port = sp;
 	initSocket(&listener,&server_addr,server_port);
 	listen(listener,5);
-	cout<<"Server listening!\n";
+	debug::i_log("Server listening!");
 }
 
 void Server::initSocket(int *sockfd, struct sockaddr_in *server_addr, int port){

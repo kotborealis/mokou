@@ -35,7 +35,7 @@ void Chat_db::addMessage(string msg){
 	reply=(redisReply*)redisCommand(c,"RPUSH mokou:messages %s",msg.c_str());
 }
 
-vector<string> Chat_db::getOnline(){
+/*vector<string> Chat_db::getOnline(){
 	vector<string> v;
 	reply=(redisReply*)redisCommand(c,"HGETALL mokou:online");
 	if(reply->type != REDIS_REPLY_ARRAY){
@@ -53,9 +53,9 @@ vector<string> Chat_db::getOnline(){
 }
 
 void Chat_db::addOnline(string token, string data){
-
+	reply=(redisReply*)redisCommand(c,"HSET mokou:online %s %s",token,data);
 }
 
 void Chat_db::removeOnline(string token){
-
-}
+	reply=(redisReply*)redisCommand(c,"HDEL mokou:online %s",token);
+}*/

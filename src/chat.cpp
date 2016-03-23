@@ -4,13 +4,16 @@
 #include <string>
 #include "chat_client.h"
 #include "jsonxx.h"
+#include "debug.h"
 
 using namespace jsonxx;
 using namespace std;
+using namespace debug;
 
 Chat::Chat(int sp): Websockets(sp){};
 
 void Chat::ws_on_connect(int clientid){
+	i_log("New connection");
 	CLIENT_ID=clientid;
 	delete chat_clients[CLIENT_ID];
 	chat_clients[CLIENT_ID] = new Chat_Client(gid++);
@@ -25,12 +28,15 @@ void Chat::ws_on_connect(int clientid){
 	for(auto it=h.begin();it!=h.end();it++)
 		send(*it);
 }
+
 void Chat::ws_on_close(int clientid){
+	i_log("Disconnected");
 	CLIENT_ID=clientid;
 	if(chat_clients[CLIENT_ID]->loggedIn)
 		handler_logout();
 	chat_clients.erase(CLIENT_ID);
 }
+
 void Chat::ws_on_message(int clientid, string message){
 	CLIENT_ID=clientid;
 	Object o;
