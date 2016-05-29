@@ -1,4 +1,6 @@
-#Ему тепло?
-![faf](http://i.imgur.com/DHPqsoUs.jpg)
+# Mokou
+Small C++ chat with redis DB
 
-(А то!)
+## Client
+
+[Web-based client](https://github.com/kotborealis/mokou-client)
